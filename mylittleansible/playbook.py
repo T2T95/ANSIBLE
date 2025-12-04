@@ -1,137 +1,206 @@
-"""Playbook execution - Parse and execute task lists."""
+"""Playbook parser and executor for MyLittleAnsible."""
 
-import logging
-from typing import List, Dict, Any, Optional
+import time
+from typing import Any, Dict, List
+
 import yaml
-from mylittleansible.ssh_manager import SSHManager
-from mylittleansible.inventory import Inventory
-from mylittleansible.modules.apt import AptModule
-from mylittleansible.modules.copy import CopyModule
-from mylittleansible.modules.template import TemplateModule
-from mylittleansible.modules.service import ServiceModule
-from mylittleansible.modules.command import CommandModule
-from mylittleansible.modules.sysctl import SysctlModule
 
-logger = logging.getLogger("mla")
+from mylittleansible.inventory import Inventory
+from mylittleansible.modules import (
+    AptModule,
+    CommandModule,
+    CopyModule,
+    ServiceModule,
+    SysctlModule,
+    TemplateModule,
+)
+from mylittleansible.ssh_manager import SSHManager
+from mylittleansible.utils import TaskResult, PlaybookResult
+from mylittleansible.utils.logger import get_logger
+
+logger = get_logger("playbook")
+
+# Module registry
+MODULES = {
+    "apt": AptModule,
+    "command": CommandModule,
+    "service": ServiceModule,
+    "sysctl": SysctlModule,
+    "copy": CopyModule,
+    "template": TemplateModule,
+}
+
+
+class PlaybookError(Exception):
+    """Exception raised for playbook-related errors."""
 
 
 class Playbook:
-    """Parse and execute playbooks."""
+    """Represents a playbook with a list of tasks."""
 
-    def __init__(self, playbook_file: str, inventory: Inventory, dry_run: bool = False):
-        self.playbook_file = playbook_file
-        self.inventory = inventory
+    def __init__(self, tasks: List[Dict[str, Any]], dry_run: bool = False) -> None:
+        """
+        Initialize a playbook.
+
+        Args:
+            tasks: List of task dictionaries
+            dry_run: If True, simulate without executing
+        """
+        self.tasks = tasks
         self.dry_run = dry_run
-        self.tasks = []
-        self.load()
 
-    def load(self) -> None:
+    @staticmethod
+    def load(file_path: str, dry_run: bool = False) -> "Playbook":
+        """
+        Load a playbook from a YAML file.
+
+        Args:
+            file_path: Path to the YAML playbook file
+            dry_run: If True, simulate without executing
+
+        Returns:
+            Playbook instance
+
+        Raises:
+            FileNotFoundError: If file doesn't exist
+            PlaybookError: If YAML is invalid
+        """
         try:
-            with open(self.playbook_file, "r") as f:
+            with open(file_path, "r") as f:
                 data = yaml.safe_load(f)
-
-            if not isinstance(data, list):
-                raise ValueError("Playbook must be a list of tasks")
-
-            self.tasks = data
-            logger.info(f"Loaded playbook with {len(self.tasks)} task(s)")
-
-        except FileNotFoundError:
-            logger.error(f"Playbook file not found: {self.playbook_file}")
-            raise
+        except FileNotFoundError as e:
+            raise FileNotFoundError(f"Playbook file not found: {file_path}") from e
         except yaml.YAMLError as e:
-            logger.error(f"Invalid YAML in playbook file: {e}")
-            raise
+            raise PlaybookError(f"Invalid YAML in {file_path}: {str(e)}") from e
 
-    def get_tasks(self) -> List[Dict[str, Any]]:
-        return self.tasks
+        if not isinstance(data, list):
+            raise PlaybookError("Playbook must be a list of tasks")
 
-    def validate(self) -> bool:
-        for idx, task in enumerate(self.tasks):
-            if not isinstance(task, dict):
-                raise ValueError(f"Task {idx + 1} must be a dictionary")
-            if "module" not in task:
-                raise ValueError(f"Task {idx + 1} missing 'module' field")
-            if "params" not in task:
-                task["params"] = {}
-        logger.info("Playbook validation successful")
-        return True
+        logger.info("Loaded playbook with %d task(s)", len(data))
+        return Playbook(data, dry_run=dry_run)
 
-    def execute(
-        self, ssh_manager: SSHManager, hosts: Optional[List[str]] = None, debug: bool = False
-    ) -> Dict[str, Dict[str, Any]]:
-        self.validate()
-        if hosts is None:
-            hosts = self.inventory.get_hosts_list()
+    def execute(self, inventory: Inventory) -> PlaybookResult:
+        """
+        Execute all tasks on all hosts in inventory.
 
-        module_map = {
-            "apt": AptModule,
-            "copy": CopyModule,
-            "template": TemplateModule,
-            "service": ServiceModule,
-            "command": CommandModule,
-            "sysctl": SysctlModule,
-        }
+        Args:
+            inventory: Target inventory with hosts
 
-        total_tasks = len(self.tasks)
-        host_ips = [self.inventory.get_host_address(h) for h in hosts]
-        logger.info(f"processing {total_tasks} tasks on hosts: {', '.join(host_ips)}")
+        Returns:
+            PlaybookResult with aggregated results
 
-        results = {host: {"ok": 0, "changed": 0, "failed": 0, "tasks": []} for host in hosts}
+        Raises:
+            PlaybookError: If execution fails
+        """
+        result = PlaybookResult()
 
-        for task_idx, task in enumerate(self.tasks, 1):
-            module_name = task.get("module")
-            params = task.get("params", {})
+        for host_name, host_config in inventory.hosts.items():
+            logger.info("=" * 60)
+            logger.info("Executing tasks on host: %s", host_name)
+            logger.info("=" * 60)
 
-            for host in hosts:
-                try:
-                    host_addr = self.inventory.get_host_address(host)
-                    logger.info(
-                        f"[{task_idx}] host={host_addr} op={module_name} "
-                        + " ".join(f"{k}={v}" for k, v in params.items())
-                    )
-
-                    if self.dry_run:
-                        logger.info(
-                            f"[{task_idx}] host={host_addr} op={module_name} status=DRY_RUN"
-                        )
-                        results[host]["ok"] += 1
-                        continue
-
-                    if module_name in module_map:
-                        ssh_client = ssh_manager.connect(
-                            host_addr,
-                            port=self.inventory.get_host_port(host),
-                            username=self.inventory.get_host_username(host),
-                            password=self.inventory.get_host_password(host),
-                            ssh_key_file=self.inventory.get_host_key_file(host),
-                        )
-
-                        module_instance = module_map[module_name](params)
-                        result = module_instance.process(ssh_client)
-
-                        status = "CHANGED" if "CHANGED" in result.stdout else "OK"
-                        logger.info(
-                            f"[{task_idx}] host={host_addr} op={module_name} status={status}"
-                        )
-                        results[host][status.lower()] += 1
-                    else:
-                        logger.info(f"[{task_idx}] host={host_addr} op={module_name} status=OK")
-                        results[host]["ok"] += 1
-
-                except Exception as e:
-                    error_msg = str(e)[:200]
-                    logger.error(
-                        f"[{task_idx}] host={host_addr} op={module_name} error={error_msg}"
-                    )
-                    results[host]["failed"] += 1
-
-        logger.info(f"done processing tasks for hosts: {', '.join(host_ips)}")
-        for host in hosts:
-            host_addr = self.inventory.get_host_address(host)
-            res = results[host]
-            logger.info(
-                f"host={host_addr} ok={res['ok']} changed={res['changed']} fail={res['failed']}"
+            ssh_manager = SSHManager(
+                hostname=host_config.get("ssh_address"),
+                port=host_config.get("ssh_port", 22),
+                username=host_config.get("ssh_user"),
+                password=host_config.get("ssh_password"),
+                key_file=host_config.get("ssh_key"),
             )
 
-        return results
+            try:
+                ssh_manager.connect()
+
+                for task_idx, task in enumerate(self.tasks, 1):
+                    task_result = self._execute_task(
+                        host_name, task, ssh_manager, task_idx
+                    )
+                    result.add_result(task_result)
+
+                    if task_result.status == "FAILED":
+                        logger.error(
+                            "Task failed on host %s. Stopping execution on this host.",
+                            host_name,
+                        )
+                        break
+
+            except Exception as e:
+                logger.error("Error on host %s: %s", host_name, str(e))
+                result.add_result(
+                    TaskResult(
+                        host=host_name,
+                        task_name="connection",
+                        status="FAILED",
+                        message=str(e),
+                    )
+                )
+
+            finally:
+                ssh_manager.close()
+
+        self._print_summary(result)
+        return result
+
+    def _execute_task(
+        self, host_name: str, task: Dict[str, Any], ssh_manager: SSHManager, task_idx: int
+    ) -> TaskResult:
+        """Execute a single task on a host."""
+        module_name = task.get("module")
+        params = task.get("params", {})
+
+        if not module_name:
+            logger.warning("Task %d has no module specified", task_idx)
+            return TaskResult(
+                host=host_name,
+                task_name=f"Task {task_idx}",
+                status="SKIPPED",
+                message="No module specified",
+            )
+
+        if module_name not in MODULES:
+            logger.error("Unknown module: %s", module_name)
+            return TaskResult(
+                host=host_name,
+                task_name=f"{module_name} (Task {task_idx})",
+                status="FAILED",
+                message=f"Unknown module: {module_name}",
+            )
+
+        try:
+            start_time = time.time()
+
+            module_class = MODULES[module_name]
+            module = module_class(params, dry_run=self.dry_run)
+            cmd_result = module.execute(ssh_manager.client)
+
+            duration = time.time() - start_time
+
+            status = "OK" if cmd_result.is_success else "FAILED"
+            message = cmd_result.stdout or cmd_result.stderr
+
+            task_result = TaskResult(
+                host=host_name,
+                task_name=f"{module_name} (Task {task_idx})",
+                status=status,
+                changed=cmd_result.changed,
+                message=message,
+                duration=duration,
+            )
+
+            logger.info(str(task_result))
+            return task_result
+
+        except Exception as e:
+            logger.error("Exception in task %d on host %s: %s", task_idx, host_name, str(e))
+            return TaskResult(
+                host=host_name,
+                task_name=f"{module_name} (Task {task_idx})",
+                status="FAILED",
+                message=str(e),
+            )
+
+    def _print_summary(self, result: PlaybookResult) -> None:
+        """Print a summary of the playbook execution."""
+        logger.info("=" * 60)
+        logger.info(str(result))
+        logger.info("=" * 60)
+        logger.info("Playbook execution completed")
