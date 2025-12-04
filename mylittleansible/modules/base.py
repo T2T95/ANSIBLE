@@ -2,94 +2,77 @@
 
 from abc import ABC, abstractmethod
 from typing import Any, Dict
+
 from mylittleansible.utils import CmdResult
 from paramiko import SSHClient
-from dataclasses import dataclass, field
-from typing import Optional
 
 
-@dataclass
-class CmdResult:
-    """Result of a command execution."""
+class BaseModule(ABC):
+    """Abstract base class for all MyLittleAnsible modules."""
 
-    stdout: str
-    stderr: str
-    exit_code: int
-    changed: bool = False
+    name: str = "base"
 
-    def __str__(self) -> str:
-        """String representation of the result."""
-        status = "✓ OK" if self.exit_code == 0 else "✗ FAILED"
-        changed_str = "[CHANGED]" if self.changed else ""
-        return f"{status} {changed_str} (exit_code={self.exit_code})"
+    def __init__(
+        self, params: Dict[str, Any], dry_run: bool = False, changed_threshold: bool = True
+    ) -> None:
+        """
+        Initialize a module.
 
-    @property
-    def is_success(self) -> bool:
-        """Check if command was successful."""
-        return self.exit_code == 0
+        Args:
+            params: Dictionary of parameters for the module
+            dry_run: If True, simulate without executing
+            changed_threshold: If True, mark task as changed
+        """
+        self.params = params
+        self.dry_run = dry_run
+        self.changed = changed_threshold
 
+    def check_required_params(self, required: list) -> None:
+        """
+        Check if all required parameters are present.
 
-@dataclass
-class TaskResult:
-    """Result of a task execution on a single host."""
+        Args:
+            required: List of required parameter names
 
-    host: str
-    task_name: str
-    status: str  # OK, FAILED, SKIPPED
-    changed: bool = False
-    message: str = ""
-    duration: float = 0.0
+        Raises:
+            ValueError: If any required parameter is missing
+        """
+        missing = [p for p in required if p not in self.params]
+        if missing:
+            raise ValueError(f"Missing required parameters: {', '.join(missing)}")
 
-    def __str__(self) -> str:
-        """String representation of task result."""
-        changed_str = " [CHANGED]" if self.changed else ""
-        return f"[{self.status}] {self.host} - {self.task_name}{changed_str}"
+    @abstractmethod
+    def process(self, ssh_client: SSHClient) -> CmdResult:
+        """
+        Process the module logic.
 
+        Args:
+            ssh_client: Active SSH connection
 
-@dataclass
-class PlaybookResult:
-    """Overall result of a playbook execution."""
+        Returns:
+            CmdResult with execution details
+        """
+        pass
 
-    ok_count: int = 0
-    failed_count: int = 0
-    changed_count: int = 0
-    skipped_count: int = 0
-    task_results: list = field(default_factory=list)
+    def execute(self, ssh_client: SSHClient) -> CmdResult:
+        """
+        Execute the module with dry-run support.
 
-    def add_result(self, result: TaskResult) -> None:
-        """Add a task result."""
-        self.task_results.append(result)
-        if result.status == "OK":
-            self.ok_count += 1
-        elif result.status == "FAILED":
-            self.failed_count += 1
-        elif result.status == "SKIPPED":
-            self.skipped_count += 1
+        Args:
+            ssh_client: Active SSH connection
 
-        if result.changed:
-            self.changed_count += 1
+        Returns:
+            CmdResult with execution details
+        """
+        if self.dry_run:
+            return CmdResult(
+                stdout=f"[DRY-RUN] Would execute {self.name} with params: {self.params}",
+                stderr="",
+                exit_code=0,
+                changed=False,
+            )
 
-    def __str__(self) -> str:
-        """Summary of playbook execution."""
-        return (
-            f"Playbook Summary: ok={self.ok_count} failed={self.failed_count} "
-            f"changed={self.changed_count} skipped={self.skipped_count}"
-        )
+        result = self.process(ssh_client)
+        result.changed = self.changed and result.is_success
 
-    @property
-    def is_success(self) -> bool:
-        """Check if all tasks succeeded."""
-        return self.failed_count == 0
-
-
-def get_ssh_key_path() -> Optional[str]:
-    """Get the default SSH key path."""
-    import os
-
-    home = os.path.expanduser("~")
-    default_key = os.path.join(home, ".ssh", "id_rsa")
-
-    if os.path.exists(default_key):
-        return default_key
-
-    return None
+        return result
