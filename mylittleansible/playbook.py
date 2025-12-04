@@ -111,9 +111,7 @@ class Playbook:
                 ssh_manager.connect()
 
                 for task_idx, task in enumerate(self.tasks, 1):
-                    task_result = self._execute_task(
-                        host_name, task, ssh_manager, task_idx
-                    )
+                    task_result = self._execute_task(host_name, task, ssh_manager, task_idx)
                     result.add_result(task_result)
 
                     if task_result.status == "FAILED":

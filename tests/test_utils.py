@@ -23,9 +23,7 @@ class TestCmdResult:
 
     def test_cmd_result_str(self):
         """Test string representation."""
-        result = CmdResult(
-            stdout="Package installed", stderr="", exit_code=0, changed=True
-        )
+        result = CmdResult(stdout="Package installed", stderr="", exit_code=0, changed=True)
         assert "✓ OK" in str(result)
         assert "[CHANGED]" in str(result)
 
@@ -35,9 +33,7 @@ class TestTaskResult:
 
     def test_task_result_ok(self):
         """Test OK task result."""
-        result = TaskResult(
-            host="web01", task_name="apt", status="OK", changed=True
-        )
+        result = TaskResult(host="web01", task_name="apt", status="OK", changed=True)
         assert result.status == "OK"
         assert result.changed is True
 
@@ -51,9 +47,7 @@ class TestTaskResult:
 
     def test_task_result_str(self):
         """Test string representation."""
-        result = TaskResult(
-            host="web01", task_name="apt", status="OK", changed=True
-        )
+        result = TaskResult(host="web01", task_name="apt", status="OK", changed=True)
         assert "[OK]" in str(result)
         assert "web01" in str(result)
         assert "[CHANGED]" in str(result)
@@ -81,24 +75,16 @@ class TestPlaybookResult:
     def test_playbook_result_add_changed(self):
         """Test tracking changed tasks."""
         result = PlaybookResult()
-        task = TaskResult(
-            host="web01", task_name="apt", status="OK", changed=True
-        )
+        task = TaskResult(host="web01", task_name="apt", status="OK", changed=True)
         result.add_result(task)
         assert result.changed_count == 1
 
     def test_playbook_result_summary(self):
         """Test playbook summary."""
         result = PlaybookResult()
-        result.add_result(
-            TaskResult(host="web01", task_name="apt", status="OK", changed=True)
-        )
-        result.add_result(
-            TaskResult(host="web02", task_name="service", status="OK")
-        )
-        result.add_result(
-            TaskResult(host="web03", task_name="command", status="FAILED")
-        )
+        result.add_result(TaskResult(host="web01", task_name="apt", status="OK", changed=True))
+        result.add_result(TaskResult(host="web02", task_name="service", status="OK"))
+        result.add_result(TaskResult(host="web03", task_name="command", status="FAILED"))
 
         assert result.ok_count == 2
         assert result.failed_count == 1

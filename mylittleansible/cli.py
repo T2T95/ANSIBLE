@@ -38,14 +38,11 @@ logger = get_logger("mla")
 )
 def main(playbook_file: str, inventory_file: str, dry_run: bool, verbose: int) -> None:
     """
-    Entry point for the MyLittleAnsible CLI.
-    
+     Entry point for the MyLittleAnsible CLI.
     Loads the inventory and playbook, then executes tasks on all hosts.
-    
-    Examples:
-        mla -f playbook.yml -i inventory.yml
-        mla -f playbook.yml -i inventory.yml --dry-run
-        mla -f playbook.yml -i inventory.yml -vv
+             mla -f playbook.yml -i inventory.yml
+         mla -f playbook.yml -i inventory.yml --dry-run
+         mla -f playbook.yml -i inventory.yml -vv
     """
     logger.info("Starting MyLittleAnsible")
 

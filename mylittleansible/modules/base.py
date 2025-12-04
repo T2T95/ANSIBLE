@@ -1,5 +1,9 @@
-"""Enhanced utilities for MyLittleAnsible with status tracking."""
+"""Base module class for MyLittleAnsible."""
 
+from abc import ABC, abstractmethod
+from typing import Any, Dict
+from mylittleansible.utils import CmdResult
+from paramiko import SSHClient
 from dataclasses import dataclass, field
 from typing import Optional
 
