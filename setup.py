@@ -12,7 +12,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "mla=mylittleansible.cli:main",
+            "mla = mylittleansible.cli:main",
         ],
     },
 )

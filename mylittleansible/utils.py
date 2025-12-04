@@ -1,5 +1,7 @@
 """Enhanced utilities for MyLittleAnsible with status tracking."""
 
+import logging
+import os
 from dataclasses import dataclass, field
 from typing import Optional
 
@@ -80,8 +82,6 @@ class PlaybookResult:
 
 def get_ssh_key_path() -> Optional[str]:
     """Get the default SSH key path."""
-    import os
-
     home = os.path.expanduser("~")
     default_key = os.path.join(home, ".ssh", "id_rsa")
 
@@ -89,3 +89,23 @@ def get_ssh_key_path() -> Optional[str]:
         return default_key
 
     return None
+
+
+def get_logger(name: str) -> logging.Logger:
+    """Return a configured logger with timestamp and level."""
+    logger = logging.getLogger(name)
+
+    if logger.handlers:
+        return logger  # déjà configuré
+
+    logger.setLevel(logging.INFO)
+
+    handler = logging.StreamHandler()
+    # ✅ CORRECTION : Sans datefmt %f (Windows incompatible)
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    return logger

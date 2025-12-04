@@ -1,10 +1,12 @@
 """Command-line interface for MyLittleAnsible with enhanced features."""
 
 import click
+from click.exceptions import Exit
 
 from mylittleansible.inventory import Inventory
 from mylittleansible.playbook import Playbook
-from mylittleansible.utils.logger import get_logger
+from mylittleansible.utils import get_logger
+
 
 logger = get_logger("mla")
 
@@ -38,11 +40,12 @@ logger = get_logger("mla")
 )
 def main(playbook_file: str, inventory_file: str, dry_run: bool, verbose: int) -> None:
     """
-     Entry point for the MyLittleAnsible CLI.
+    Entry point for the MyLittleAnsible CLI.
     Loads the inventory and playbook, then executes tasks on all hosts.
-             mla -f playbook.yml -i inventory.yml
-         mla -f playbook.yml -i inventory.yml --dry-run
-         mla -f playbook.yml -i inventory.yml -vv
+
+        mla -f playbook.yml -i inventory.yml
+        mla -f playbook.yml -i inventory.yml --dry-run
+        mla -f playbook.yml -i inventory.yml -vv
     """
     logger.info("Starting MyLittleAnsible")
 
@@ -66,16 +69,17 @@ def main(playbook_file: str, inventory_file: str, dry_run: bool, verbose: int) -
         # Exit with appropriate code
         if not result.is_success:
             logger.error("Playbook execution failed")
-            raise click.Exit(code=1)
+            raise Exit(code=1)
 
         logger.info("Playbook execution completed successfully")
 
     except FileNotFoundError as e:
         logger.error("File not found: %s", str(e))
-        raise click.Exit(code=1) from e
+        raise Exit(code=1) from e
+
     except Exception as e:
-        logger.error("Playbook execution failed: %s", str(e))
-        raise click.Exit(code=1) from e
+        logger.error("Playbook execution failed: %s", str(e)[:200])
+        raise Exit(code=1) from e
 
 
 if __name__ == "__main__":
