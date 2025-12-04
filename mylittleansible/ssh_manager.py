@@ -1,15 +1,15 @@
 """SSH connection manager for MyLittleAnsible."""
 
+import logging
 import socket
 from typing import Optional
 
 import paramiko
 from paramiko import SSHClient, AutoAddPolicy
 
-from mylittleansible.utils.ssh_utils import get_ssh_key_path
-from mylittleansible.utils.logger import get_logger
+from mylittleansible.utils import get_ssh_key_path
 
-logger = get_logger("ssh")
+logger = logging.getLogger("ssh")
 
 
 class SSHConnectionError(Exception):
