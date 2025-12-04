@@ -1,165 +1,117 @@
-"""SSH connection management using Paramiko."""
+"""SSH connection manager for MyLittleAnsible."""
 
-import logging
-from typing import Optional, Tuple
-from paramiko.ssh_exception import SSHException, AuthenticationException
-from mylittleansible.utils import CmdResult, get_ssh_key_path, get_current_user
+import socket
+from typing import Optional
+
+import paramiko
+from paramiko import SSHClient, AutoAddPolicy
+
+from mylittleansible.utils.ssh_utils import get_ssh_key_path
+from mylittleansible.utils.logger import get_logger
+
+logger = get_logger("ssh")
 
 
-logger = logging.getLogger("mla")
+class SSHConnectionError(Exception):
+    """Custom exception for SSH connection related errors."""
 
 
 class SSHManager:
-    """Manage SSH connections to remote hosts."""
+    """
+    Simple wrapper around paramiko.SSHClient to manage SSH connections.
+    """
 
-    def __init__(self):
-        """Initialize SSH manager."""
-        self.clients = {}  # Cache for SSH clients
-
-    def connect(
+    def __init__(
         self,
-        host: str,
+        hostname: str,
         port: int = 22,
         username: Optional[str] = None,
         password: Optional[str] = None,
-        ssh_key_file: Optional[str] = None,
-    ) -> SSHClient:
-        """Connect to a remote host via SSH.
+        key_file: Optional[str] = None,
+        timeout: int = 10,
+    ) -> None:
+        self.hostname = hostname
+        self.port = port
+        self.username = username
+        self.password = password
+        self.key_file = key_file
+        self.timeout = timeout
+        self.client: Optional[SSHClient] = None
 
-        Args:
-            host: Remote host IP or hostname
-            port: SSH port (default: 22)
-            username: Username (default: current user)
-            password: Password for authentication
-            ssh_key_file: Path to private key file
-
-        Returns:
-            Connected SSHClient instance
-
-        Raises:
-            AuthenticationException: If authentication fails
-            SSHException: If SSH connection fails
+    def connect(self) -> SSHClient:
         """
-        # Use cached connection if available
-        cache_key = f"{host}:{port}"
-        if cache_key in self.clients:
-            try:
-                # Test if connection is still alive
-                self.clients[cache_key].exec_command("echo")
-                return self.clients[cache_key]
-            except Exception:
-                # Connection is dead, remove from cache
-                del self.clients[cache_key]
+        Establish an SSH connection and return the connected SSHClient instance.
+        """
+        if self.client is not None:
+            return self.client
+
+        logger.info(
+            "Connecting to %s:%s as %s",
+            self.hostname,
+            self.port,
+            self.username or "<default>",
+        )
 
         client = SSHClient()
         client.set_missing_host_key_policy(AutoAddPolicy())
 
-        # Set default username
-        if username is None:
-            username = get_current_user()
-
         try:
-            # Try authentication methods in order of preference
-            if password:
-                # Username/password authentication
-                logger.debug(f"Connecting to {host}:{port} with user/pass")
-                client.connect(
-                    host,
-                    port=port,
-                    username=username,
-                    password=password,
-                    allow_agent=False,
-                    look_for_keys=False,
-                )
-            elif ssh_key_file:
-                # Private key authentication
-                logger.debug(f"Connecting to {host}:{port} with key: {ssh_key_file}")
-                client.connect(
-                    host,
-                    port=port,
-                    username=username,
-                    key_filename=ssh_key_file,
-                    allow_agent=False,
-                    look_for_keys=False,
-                )
-            else:
-                # Default SSH config (agent + default keys)
-                logger.debug(f"Connecting to {host}:{port} with default SSH config")
-                client.connect(
-                    host,
-                    port=port,
-                    username=username,
-                    allow_agent=True,
-                    look_for_keys=True,
-                )
+            connect_kwargs = {
+                "hostname": self.hostname,
+                "port": self.port,
+                "timeout": self.timeout,
+            }
 
-            logger.info(f"Successfully connected to {username}@{host}:{port}")
-            self.clients[cache_key] = client
+            if self.username:
+                connect_kwargs["username"] = self.username
+
+            if self.password:
+                connect_kwargs["password"] = self.password
+
+            if self.key_file:
+                connect_kwargs["key_filename"] = self.key_file
+            else:
+                # Use default SSH key (e.g. ~/.ssh/id_rsa) if available
+                default_key = get_ssh_key_path()
+                if default_key:
+                    connect_kwargs["key_filename"] = default_key
+
+            client.connect(**connect_kwargs)
+            self.client = client
+            logger.info("Successfully connected to %s:%s", self.hostname, self.port)
             return client
 
-        except AuthenticationException as e:
-            logger.error(f"Authentication failed for {username}@{host}: {e}")
-            raise
-        except SSHException as e:
-            logger.error(f"SSH connection failed to {host}: {e}")
-            raise
+        except (paramiko.SSHException, socket.error) as exc:
+            logger.error("SSH connection failed to %s:%s: %s", self.hostname, self.port, exc)
+            client.close()
+            raise SSHConnectionError(str(exc)) from exc
 
-    def run_command(
-        self,
-        client: SSHClient,
-        command: str,
-        shell: str = "/bin/bash",
-    ) -> CmdResult:
-        """Execute a command on the remote host.
-
-        Args:
-            client: Connected SSHClient instance
-            command: Command to execute
-            shell: Shell to use (default: /bin/bash)
-
-        Returns:
-            CmdResult with stdout, stderr, and exit code
+    def exec_command(self, command: str):
         """
-        # Wrap command in shell if not already in shell syntax
-        full_command = f"{shell} -c {repr(command)}" if not command.startswith(shell) else command
-
-        try:
-            stdin, stdout, stderr = client.exec_command(full_command)
-            exit_code = stdout.channel.recv_exit_status()
-
-            stdout_text = stdout.read().decode("utf-8", errors="ignore")
-            stderr_text = stderr.read().decode("utf-8", errors="ignore")
-
-            return CmdResult(stdout=stdout_text, stderr=stderr_text, exit_code=exit_code)
-        except Exception as e:
-            logger.error(f"Command execution failed: {e}")
-            return CmdResult(stdout="", stderr=str(e), exit_code=1)
-
-    def close(self, host: Optional[str] = None, port: int = 22) -> None:
-        """Close SSH connection(s).
-
-        Args:
-            host: Specific host to disconnect (if None, close all)
-            port: SSH port (default: 22)
+        Execute a command on the remote host.
+        Returns (stdin, stdout, stderr).
         """
-        if host is None:
-            # Close all connections
-            for client in self.clients.values():
-                try:
-                    client.close()
-                except Exception:
-                    pass
-            self.clients.clear()
-        else:
-            # Close specific connection
-            cache_key = f"{host}:{port}"
-            if cache_key in self.clients:
-                try:
-                    self.clients[cache_key].close()
-                except Exception:
-                    pass
-                del self.clients[cache_key]
+        if self.client is None:
+            self.connect()
 
-    def __del__(self):
-        """Cleanup: close all connections when object is destroyed."""
-        self.close()
+        assert self.client is not None
+        logger.debug("Executing command on %s: %s", self.hostname, command)
+        return self.client.exec_command(command)
+
+    def open_sftp(self):
+        """
+        Open an SFTP session on the existing SSH connection.
+        """
+        if self.client is None:
+            self.connect()
+
+        assert self.client is not None
+        logger.debug("Opening SFTP session to %s", self.hostname)
+        return self.client.open_sftp()
+
+    def close(self) -> None:
+        """Close the SSH connection."""
+        if self.client is not None:
+            logger.info("Closing SSH connection to %s:%s", self.hostname, self.port)
+            self.client.close()
+            self.client = None
