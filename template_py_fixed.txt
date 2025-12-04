@@ -1,0 +1,68 @@
+"""Template Module for MyLittleAnsible"""
+from mylittleansible.modules.base import BaseModule
+from mylittleansible.utils import CmdResult
+from paramiko import SSHClient
+import os
+import tempfile
+from jinja2 import Environment, FileSystemLoader
+
+
+class TemplateModule(BaseModule):
+    name = "template"
+
+    def process(self, ssh_client: SSHClient) -> CmdResult:
+        self.check_required_params(["src", "dest"])
+
+        src = self.params["src"]
+        dest = self.params["dest"]
+
+        # Vérifier que le fichier source existe
+        if not os.path.exists(src):
+            return CmdResult(
+                stdout="",
+                stderr=f"Template file not found: {src}",
+                exit_code=1,
+            )
+
+        # Charger et rendre le template Jinja2
+        template_dir = os.path.dirname(os.path.abspath(src))
+        template_file = os.path.basename(src)
+
+        try:
+            env = Environment(loader=FileSystemLoader(template_dir))
+            template = env.get_template(template_file)
+            rendered_content = template.render(self.params)
+        except Exception as e:
+            return CmdResult(
+                stdout="", stderr=f"Template rendering error: {str(e)}", exit_code=1
+            )
+
+        # Créer un fichier temporaire Windows-compatible
+        try:
+            with tempfile.NamedTemporaryFile(
+                mode="w", delete=False, suffix=".txt"
+            ) as tmp:
+                tmp.write(rendered_content)
+                temp_local_path = tmp.name
+        except Exception as e:
+            return CmdResult(stdout="", stderr=f"Temp file error: {str(e)}", exit_code=1)
+
+        # Envoyer le fichier via SFTP
+        sftp = ssh_client.open_sftp()
+        try:
+            sftp.put(temp_local_path, dest)
+            return CmdResult(
+                stdout=f"Template deployed to {dest}", stderr="", exit_code=0
+            )
+        except Exception as e:
+            return CmdResult(
+                stdout="", stderr=f"SFTP error: {str(e)}", exit_code=1
+            )
+        finally:
+            sftp.close()
+            # Nettoyer le fichier temporaire
+            try:
+                if os.path.exists(temp_local_path):
+                    os.remove(temp_local_path)
+            except Exception:
+                pass

@@ -1,0 +1,25 @@
+- module: apt
+  params:
+    name: nginx-common
+    state: present
+
+- module: copy
+  params:
+    src: ./public
+    dest: /var/www/public
+    backup: false
+
+- module: template
+  params:
+    src: default.conf.j2
+    dest: /etc/nginx/sites-enabled/default
+
+- module: service
+  params:
+    name: nginx
+    state: started
+
+- module: service
+  params:
+    name: nginx
+    state: enabled

@@ -1,0 +1,4 @@
+- module: service
+  params:
+    name: ssh
+    state: started

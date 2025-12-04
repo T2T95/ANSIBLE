@@ -1,0 +1,4 @@
+- module: copy
+  params:
+    src: "examples/files/test.txt"
+    dest: "/tmp/test.txt"

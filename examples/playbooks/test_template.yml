@@ -1,0 +1,7 @@
+- module: template
+  params:
+    src: "examples/templates/test.j2"
+    dest: "/tmp/test_rendered.txt"
+    hostname: "ubuntu24"
+    user: "toto"
+    date: "2025-11-17"
