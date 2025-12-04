@@ -16,9 +16,9 @@ from mylittleansible.modules import (
 )
 from mylittleansible.ssh_manager import SSHManager
 from mylittleansible.utils import TaskResult, PlaybookResult
-from mylittleansible.utils.logger import get_logger
 
-logger = get_logger("playbook")
+
+logger = logging.getLogger("playbook")
 
 # Module registry
 MODULES = {
