@@ -7,7 +7,6 @@ from typing import Any, Dict, List
 import yaml
 
 from mylittleansible.inventory import Inventory
-from mylittleansible.inventory import Inventory
 from mylittleansible.modules import (
     AptModule,
     CommandModule,
