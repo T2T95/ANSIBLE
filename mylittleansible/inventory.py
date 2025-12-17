@@ -16,16 +16,16 @@ class Inventory:
     @classmethod
     def load(cls, inventory_file: str) -> "Inventory":
         """Load inventory from YAML file.
-        
+
         Args:
-            inventory_file: Path to the inventory YAML file
-            
+            inventory_file: Path to the inventory YAML file.
+
         Returns:
-            Inventory instance with loaded hosts
+            Inventory instance with loaded hosts.
         """
         with open(inventory_file, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
-        
+
         hosts = data.get("hosts", {}) if data else {}
-        
+
         return cls(inventory_file=inventory_file, hosts=hosts)
