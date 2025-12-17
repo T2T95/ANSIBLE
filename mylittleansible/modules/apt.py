@@ -23,12 +23,12 @@ class AptModule(BaseModule):
         elif desired == "present" and not already_present:
             install_cmd = f"sudo apt-get update && sudo apt-get install -y {package}"
             result = self._run_cmd(ssh_client, install_cmd)
-            status = "CHANGED" if result.is_success() else "KO"
+            status = "CHANGED" if result.is_success else "KO"
             exit_code = result.exit_code
         elif desired == "absent" and already_present:
             remove_cmd = f"sudo apt-get remove -y {package}"
             result = self._run_cmd(ssh_client, remove_cmd)
-            status = "CHANGED" if result.is_success() else "KO"
+            status = "CHANGED" if result.is_success else "KO"
             exit_code = result.exit_code
         elif desired == "absent" and not already_present:
             status = "OK"

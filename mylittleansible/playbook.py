@@ -1,4 +1,4 @@
-"""Playbook parser and executor for MyLittleAnsible."""
+""""Playbook parser and executor for MyLittleAnsible."""
 
 import logging
 import time
@@ -17,7 +17,6 @@ from mylittleansible.modules import (
 )
 from mylittleansible.ssh_manager import SSHManager
 from mylittleansible.utils import TaskResult, PlaybookResult
-
 
 logger = logging.getLogger("playbook")
 
@@ -100,11 +99,12 @@ class Playbook:
             logger.info("Executing tasks on host: %s", host_name)
             logger.info("=" * 60)
 
+            # IMPORTANT : utiliser les clés définies dans inventory.yml
             ssh_manager = SSHManager(
-                hostname=host_config.get("ssh_address"),
-                port=host_config.get("ssh_port", 22),
-                username=host_config.get("ssh_user"),
-                password=host_config.get("ssh_password"),
+                hostname=host_config.get("host"),
+                port=host_config.get("port", 22),
+                username=host_config.get("user"),
+                password=host_config.get("password"),
                 key_file=host_config.get("ssh_key"),
             )
 
@@ -112,7 +112,9 @@ class Playbook:
                 ssh_manager.connect()
 
                 for task_idx, task in enumerate(self.tasks, 1):
-                    task_result = self._execute_task(host_name, task, ssh_manager, task_idx)
+                    task_result = self._execute_task(
+                        host_name, task, ssh_manager, task_idx
+                    )
                     result.add_result(task_result)
 
                     if task_result.status == "FAILED":
@@ -140,7 +142,11 @@ class Playbook:
         return result
 
     def _execute_task(
-        self, host_name: str, task: Dict[str, Any], ssh_manager: SSHManager, task_idx: int
+        self,
+        host_name: str,
+        task: Dict[str, Any],
+        ssh_manager: SSHManager,
+        task_idx: int,
     ) -> TaskResult:
         """Execute a single task on a host."""
         module_name = task.get("module")

@@ -1,6 +1,7 @@
+---
 hosts:
   ubuntu24:
-    ssh_address: 192.168.1.23
-    ssh_port: 22
-    ssh_user: toto
-    ssh_password: toto
+    host: 172.20.10.3
+    user: toto
+    port: 22
+    password: "toto"
