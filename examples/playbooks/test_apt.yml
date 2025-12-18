@@ -1,6 +1,6 @@
 - module: apt
   params:
-    name: curl
+    name: nginx
     state: present
 
 #- module: apt
