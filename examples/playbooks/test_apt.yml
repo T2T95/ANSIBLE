@@ -1,4 +1,6 @@
-- module: apt
-  params:
-    name: htop
-    state: present
+- hosts: ubuntu24
+  tasks:
+    - module: apt
+      params:
+        name: curl
+        state: present
