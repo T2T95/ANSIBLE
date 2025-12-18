@@ -46,4 +46,6 @@ class AptModule(BaseModule):
     def _run_cmd(self, ssh_client: SSHClient, command: str) -> CmdResult:
         stdin, stdout, stderr = ssh_client.exec_command(command)
         exit_code = stdout.channel.recv_exit_status()
-        return CmdResult(stdout.read().decode("utf-8"), stderr.read().decode("utf-8"), exit_code)
+        return CmdResult(
+            stdout.read().decode("utf-8"), stderr.read().decode("utf-8"), exit_code
+        )

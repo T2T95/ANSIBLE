@@ -34,21 +34,29 @@ class TemplateModule(BaseModule):
             template = env.get_template(template_file)
             rendered_content = template.render(self.params)
         except Exception as e:
-            return CmdResult(stdout="", stderr=f"Template rendering error: {str(e)}", exit_code=1)
+            return CmdResult(
+                stdout="", stderr=f"Template rendering error: {str(e)}", exit_code=1
+            )
 
         # Créer un fichier temporaire Windows-compatible
         try:
-            with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".txt") as tmp:
+            with tempfile.NamedTemporaryFile(
+                mode="w", delete=False, suffix=".txt"
+            ) as tmp:
                 tmp.write(rendered_content)
                 temp_local_path = tmp.name
         except Exception as e:
-            return CmdResult(stdout="", stderr=f"Temp file error: {str(e)}", exit_code=1)
+            return CmdResult(
+                stdout="", stderr=f"Temp file error: {str(e)}", exit_code=1
+            )
 
         # Envoyer le fichier via SFTP
         sftp = ssh_client.open_sftp()
         try:
             sftp.put(temp_local_path, dest)
-            return CmdResult(stdout=f"Template deployed to {dest}", stderr="", exit_code=0)
+            return CmdResult(
+                stdout=f"Template deployed to {dest}", stderr="", exit_code=0
+            )
         except Exception as e:
             return CmdResult(stdout="", stderr=f"SFTP error: {str(e)}", exit_code=1)
         finally:

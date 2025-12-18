@@ -82,7 +82,9 @@ class SSHManager:
             return client
 
         except (paramiko.SSHException, socket.error) as exc:
-            logger.error("SSH connection failed to %s:%s: %s", self.hostname, self.port, exc)
+            logger.error(
+                "SSH connection failed to %s:%s: %s", self.hostname, self.port, exc
+            )
             client.close()
             raise SSHConnectionError(str(exc)) from exc
 

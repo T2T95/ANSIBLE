@@ -2,3 +2,8 @@
   params:
     name: curl
     state: present
+
+#- module: apt
+#  params:
+#    name: curl
+#    state: absent 

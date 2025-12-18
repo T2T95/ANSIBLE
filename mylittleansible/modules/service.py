@@ -23,7 +23,9 @@ class ServiceModule(BaseModule):
         }
 
         if desired_state not in cmd_map:
-            return CmdResult(stdout="", stderr=f"Unsupported state {desired_state}", exit_code=1)
+            return CmdResult(
+                stdout="", stderr=f"Unsupported state {desired_state}", exit_code=1
+            )
 
         cmd = cmd_map[desired_state]
         stdin, stdout, stderr = ssh_client.exec_command(cmd)

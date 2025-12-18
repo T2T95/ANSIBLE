@@ -13,7 +13,10 @@ class BaseModule(ABC):
     name: str = "base"
 
     def __init__(
-        self, params: Dict[str, Any], dry_run: bool = False, changed_threshold: bool = True
+        self,
+        params: Dict[str, Any],
+        dry_run: bool = False,
+        changed_threshold: bool = True,
     ) -> None:
         """
         Initialize a module.
