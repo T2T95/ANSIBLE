@@ -38,7 +38,13 @@ logger = get_logger("mla")
     count=True,
     help="Increase verbosity (-v, -vv, -vvv)",
 )
-def main(playbook_file: str, inventory_file: str, dry_run: bool, verbose: int) -> None:
+@click.option(
+    "--debug",
+    is_flag=True,
+    help="Enable debug mode (show full stack traces on errors)",
+)
+def main(playbook_file: str, inventory_file: str, dry_run: bool, verbose: int, debug: bool) -> None:
+
     """
     Entry point for the MyLittleAnsible CLI.
     Loads the inventory and playbook, then executes tasks on all hosts.
@@ -48,6 +54,11 @@ def main(playbook_file: str, inventory_file: str, dry_run: bool, verbose: int) -
         mla -f playbook.yml -i inventory.yml -vv
     """
     logger.info("Starting MyLittleAnsible")
+
+    if debug:
+        import logging as logging_module
+        logging_module.getLogger("mla").setLevel(logging_module.DEBUG)
+        logger.info("Debug mode enabled - full stack traces will be shown on errors")
 
     if dry_run:
         logger.warning("Running in DRY-RUN mode - no changes will be made")
@@ -78,8 +89,13 @@ def main(playbook_file: str, inventory_file: str, dry_run: bool, verbose: int) -
         raise Exit(code=1) from e
 
     except Exception as e:
-        logger.error("Playbook execution failed: %s", str(e)[:200])
+        error_msg = str(e)[:200]
+        if debug:
+            logger.exception("Full stack trace:")
+        else:
+            logger.error("Playbook execution failed: %s", error_msg)
         raise Exit(code=1) from e
+
 
 
 if __name__ == "__main__":

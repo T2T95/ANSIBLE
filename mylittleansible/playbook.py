@@ -113,12 +113,13 @@ class Playbook:
 
             # IMPORTANT : utiliser les clés définies dans inventory.yml
             ssh_manager = SSHManager(
-                hostname=host_config.get("host"),
-                port=host_config.get("port", 22),
-                username=host_config.get("user"),
-                password=host_config.get("password"),
-                key_file=host_config.get("ssh_key"),
+                hostname=host_config.get("ssh_address"),
+                port=host_config.get("ssh_port", 22),
+                username=host_config.get("ssh_user"),
+                password=host_config.get("ssh_password"),
+                key_file=host_config.get("ssh_key_file"),
             )
+
 
             try:
                 ssh_manager.connect()

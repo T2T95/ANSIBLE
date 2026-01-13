@@ -1,7 +1,7 @@
 - module: apt
   params:
     name: nginx
-    state: present
+    state: absent
 
 #- module: apt
 #  params:
