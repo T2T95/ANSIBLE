@@ -1,139 +1,168 @@
-﻿# MyLittleAnsible - Enhanced Edition 🚀
+# 🚀 MyLittleAnsible
 
-A lightweight, Python-based automation tool inspired by Ansible for remote server management via SSH.
+> Un outil **Infrastructure as Code** léger pour automatiser la configuration de serveurs Linux distants via SSH
 
-**Version:** 0.2.0 (Enhanced with status tracking, dry-run, and comprehensive testing)
-
-## 📋 Overview
-
-**MyLittleAnsible** is a simplified infrastructure-as-code solution that allows you to automate system administration tasks across multiple Linux servers. It follows Ansible's core concepts: playbooks, inventory files, and reusable modules.
-
-### ✨ Key Features
-
-- ✅ **SSH-based remote execution** using Paramiko
-- ✅ **YAML-based playbooks** for easy task definition
-- ✅ **Modular architecture** - extensible with custom modules
-- ✅ **Multi-host support** - execute tasks across multiple servers
-- ✅ **Template rendering** - Jinja2 support for dynamic configuration
-- ✅ **Detailed logging** - track execution with comprehensive logs
-- ✅ **Status tracking** - `OK`, `FAILED`, `CHANGED` states for each task
-- ✅ **Dry-run mode** - simulate execution without making changes
-- ✅ **Verbosity control** - `-v`, `-vv`, `-vvv` for detailed output
-- ✅ **Error handling** - robust SSH and timeout management
-- ✅ **Unit tests** - pytest coverage for all modules
-- ✅ **Enhanced results** - aggregated playbook summary with statistics
+[![Python 3.8+](https://img.shields.io/badge/Python-3.8%2B-blue)]()
+[![Licence](https://img.shields.io/badge/Licence-Éducatif-green)]()
+[![Status](https://img.shields.io/badge/Status-Production%20Prêt-brightgreen)]()
 
 ---
 
-## 🚀 Quick Start
+## 📖 Vue d'ensemble
 
-### Prerequisites
+**MyLittleAnsible** est un outil d'automatisation simplifié, basé sur Python, inspiré par **Ansible**, qui vous permet d'automatiser les tâches d'administration système sur plusieurs serveurs Linux en utilisant des **playbooks YAML déclaratifs**.
 
-- Python 3.8+
-- SSH access to target Linux servers
-- pip (Python package manager)
+### Pourquoi MyLittleAnsible?
 
-### Installation
+| Fonctionnalité | MyLittleAnsible | Ansible |
+|---|---|---|
+| **Courbe d'apprentissage** | ⭐⭐⭐ Facile | ⭐⭐⭐⭐⭐ Complexe |
+| **Modules** | 6 modules core | 100+ modules |
+| **Temps de setup** | 5 minutes | 30+ minutes |
+| **Cas d'usage** | Éducatif + Tâches simples | Automatisation Enterprise |
 
-1. Clone the repository:
+---
+
+## ✨ Fonctionnalités principales
+
+- ✅ **Exécution SSH distante** - Intégration Paramiko pour connexions sécurisées
+- ✅ **Playbooks YAML** - Définitions de tâches simples et lisibles
+- ✅ **6 modules core** - apt, copy, template, service, sysctl, command
+- ✅ **Support multi-hôtes** - Exécution sur plusieurs serveurs
+- ✅ **Mode dry-run** - Aperçu des changements avant exécution (🔥 **BONUS**)
+- ✅ **Mode debug** - Stack traces complètes en cas d'erreur (🔥 **BONUS**)
+- ✅ **Verbosité** - Niveaux `-v`, `-vv`, `-vvv` (🔥 **BONUS**)
+- ✅ **3 méthodes d'authentification SSH** - Mot de passe, clé SSH, défaut (~/.ssh/)
+- ✅ **Rendu de templates** - Templates Jinja2 avec variables dynamiques
+- ✅ **Idempotence** - Exécution multiple sécurisée (🔥 **BONUS**)
+- ✅ **Logging professionnel** - Pas de `print()`, trace complète
+- ✅ **Conforme PEP8** - Code propre et maintenable
+
+---
+
+## 🎯 Démarrage rapide
+
+### Prérequis
+
 ```bash
+Python 3.8+
+Accès SSH à des serveurs Linux
+pip (gestionnaire de paquets Python)
+```
+
+### Installation (5 minutes)
+
+```bash
+# 1. Cloner le repository
 git clone https://github.com/T2T95/ANSIBLE.git
 cd ANSIBLE
-```
 
-2. Create virtual environment:
-```bash
+# 2. Créer et activer l'environnement virtuel
 python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-.\.venv\Scripts\Activate.ps1  # Windows PowerShell
-```
+source .venv/bin/activate                  # Linux/Mac
+.\.venv\Scripts\Activate.ps1               # Windows PowerShell
 
-3. Install the package:
-```bash
+# 3. Installer le package
 pip install -e .
-```
 
-4. Verify installation:
-```bash
+# 4. Vérifier l'installation
 mla --help
 ```
 
 ---
 
-## 📖 Usage
+## 🎬 Utilisation
 
-### Basic Workflow
+### Flux de travail standard
 
-1. **Create an inventory file** (`inventory.yml`)
-2. **Write a playbook** (`playbook.yml`)
-3. **Execute the playbook**:
 ```bash
+# 1. Créer un fichier inventory (serveurs cibles)
+# 2. Écrire un playbook (tâches à exécuter)
+# 3. Exécuter le playbook
+
 mla -f playbook.yml -i inventory.yml
 ```
 
-### CLI Options
+### Options CLI
 
 ```bash
 mla [OPTIONS]
 
 Options:
-  -f, --file TEXT          Path to playbook file (YAML) [required]
-  -i, --inventory TEXT     Path to inventory file (YAML) [required]
-  -n, --dry-run            Simulate execution without making changes
-  -v, --verbose            Increase verbosity (-v, -vv, -vvv)
-  --help                   Show help message
+  -f, --file TEXT       Chemin du fichier playbook YAML [obligatoire]
+  -i, --inventory TEXT  Chemin du fichier inventory YAML [obligatoire]
+  -n, --dry-run         Simuler l'exécution sans effectuer de changements
+  -v, --verbose         Augmenter la verbosité (-v, -vv, -vvv)
+  --debug               Mode debug (afficher les stack traces complètes)
+  --help                Afficher cette aide et quitter
 ```
 
-### Examples
+### Exemples
 
-**1. Standard execution:**
 ```bash
-mla -f deploy_webserver.yml -i inventory.yml
-```
+# Exécution standard
+mla -f playbook.yml -i inventory.yml
 
-**2. Dry-run (simulate):**
-```bash
-mla -f deploy_webserver.yml -i inventory.yml --dry-run
-```
+# Simuler sans effectuer de changements (recommandé!)
+mla -f playbook.yml -i inventory.yml --dry-run
 
-**3. Verbose output:**
-```bash
-mla -f deploy_webserver.yml -i inventory.yml -vv
-```
+# Sortie verbose pour déboguer
+mla -f playbook.yml -i inventory.yml -vv
 
-**4. Combined:**
-```bash
-mla -f deploy_webserver.yml -i inventory.yml --dry-run -vvv
+# Mode debug (stack traces complet)
+mla -f playbook.yml -i inventory.yml --debug
+
+# Combiner les options
+mla -f playbook.yml -i inventory.yml --dry-run -vvv
 ```
 
 ---
 
-## 📦 Inventory Format
+## 📁 Format de l'inventory
+
+Définissez vos serveurs cibles dans `inventory.yml`:
 
 ```yaml
+---
 hosts:
-  web01:
+  webserver1:
     ssh_address: 192.168.1.20
     ssh_port: 22
     ssh_user: ubuntu
-    ssh_password: password123  # or use ssh_key path
-  
-  web02:
+    ssh_password: "motdepasse123"
+    
+  webserver2:
     ssh_address: 192.168.1.21
     ssh_port: 22
     ssh_user: ubuntu
-    ssh_key: /home/user/.ssh/id_rsa
+    ssh_key_file: ~/.ssh/id_rsa
 ```
+
+### Méthodes d'authentification SSH
+
+| Méthode | Configuration | Cas d'usage |
+|---|---|---|
+| **Défaut** | Aucune config nécessaire | Utilise les clés de ~/.ssh/ |
+| **Mot de passe** | `ssh_user` + `ssh_password` | Développement/Tests |
+| **Clé SSH** | `ssh_user` + `ssh_key_file` | Production ✅ |
 
 ---
 
-## 📋 Playbook Format
+## 📋 Format du playbook
+
+Définissez les tâches dans `playbook.yml`:
 
 ```yaml
+---
 - module: apt
   params:
     name: nginx
     state: present
+
+- module: copy
+  params:
+    src: ./config/nginx.conf
+    dest: /etc/nginx/nginx.conf
 
 - module: service
   params:
@@ -142,367 +171,524 @@ hosts:
 
 - module: command
   params:
-    cmd: "systemctl status nginx"
+    command: systemctl status nginx
 ```
 
 ---
 
-## 📦 Available Modules
+## 📦 Modules disponibles
 
-### 1. **apt** - Package Management
-Install, update, or remove packages (Debian/Ubuntu).
+### 1. **apt** - Gestion des paquets
+
+Installer/supprimer/mettre à jour les paquets APT sur Debian/Ubuntu:
 
 ```yaml
 - module: apt
   params:
-    name: htop          # Package name
-    state: present      # present | absent | latest
+    name: nginx              # Nom du paquet
+    state: present           # present | absent
 ```
 
-### 2. **command** - Execute Shell Commands
-Run arbitrary shell commands on remote hosts.
+### 2. **copy** - Transfert de fichiers
 
-```yaml
-- module: command
-  params:
-    cmd: "uptime"       # Command to execute
-```
-
-### 3. **service** - Service Management
-Manage system services (start, stop, restart, enable, disable).
-
-```yaml
-- module: service
-  params:
-    name: ssh           # Service name
-    state: started      # started | stopped | restarted
-```
-
-### 4. **sysctl** - System Configuration
-Modify kernel parameters and system settings.
-
-```yaml
-- module: sysctl
-  params:
-    name: "net.ipv4.ip_forward"     # Parameter name
-    value: "1"                       # Value
-```
-
-### 5. **copy** - File Transfer
-Copy files from local machine to remote hosts via SFTP.
+Copier les fichiers du local vers les serveurs distants via SFTP:
 
 ```yaml
 - module: copy
   params:
-    src: "local/path/file.txt"       # Local file
-    dest: "/remote/path/file.txt"    # Remote destination
+    src: ./config/app.conf           # Chemin du fichier local
+    dest: /etc/app/app.conf          # Destination distante
+    backup: true                     # Sauvegarde du fichier existant
 ```
 
-### 6. **template** - Template Rendering
-Render Jinja2 templates with custom variables and deploy to remote hosts.
+### 3. **template** - Rendu de templates
+
+Rendre des templates Jinja2 avec des variables:
 
 ```yaml
 - module: template
   params:
-    src: "templates/config.j2"        # Template file
-    dest: "/etc/config/app.conf"      # Remote destination
-    app_name: "MyApp"                 # Variables
-    environment: "production"
+    src: templates/config.j2         # Fichier template
+    dest: /etc/app/config.yml        # Destination distante
+    app_port: 8080                   # Variables de template
+    env: production
 ```
 
----
+**Exemple de template** (`config.j2`):
 
-## 📊 Execution Results
-
-### Output Format
-
-```
-[OK] web01 - apt [CHANGED]
-[OK] web02 - service
-[FAILED] web03 - command
+```jinja2
+server:
+  port: {{ app_port }}
+  environment: {{ env }}
+  debug: false
 ```
 
-### Result Summary
+### 4. **service** - Gestion des services
 
-```
-Playbook Summary: ok=5 failed=1 changed=3 skipped=0
-```
-
-### Status Codes
-
-- **`OK`** - Task completed successfully
-- **`FAILED`** - Task failed (execution stops on that host)
-- **`SKIPPED`** - Task was skipped
-- **`[CHANGED]`** - Task modified system state
-
----
-
-## 🧪 Testing
-
-### Running Unit Tests
-
-```bash
-pytest tests/ -v
-```
-
-### Test Coverage
-
-```bash
-pytest tests/ --cov=mylittleansible
-```
-
-### Test Playbooks
-
-```bash
-mla -f examples/playbooks/test_apt.yml -i examples/inventory/inventory.yml --dry-run
-mla -f examples/playbooks/test_command.yml -i examples/inventory/inventory.yml --dry-run
-mla -f examples/playbooks/test_service.yml -i examples/inventory/inventory.yml --dry-run
-```
-
----
-
-## 🧪 Example Playbooks
-
-### Example 1: Web Server Setup
+Gérer les services systemd (démarrer, arrêter, redémarrer, activer, désactiver):
 
 ```yaml
-# deploy_webserver.yml
+- module: service
+  params:
+    name: nginx              # Nom du service
+    state: started           # started | stopped | restarted | enabled | disabled
+```
+
+### 5. **sysctl** - Configuration système
+
+Modifier les paramètres du kernel:
+
+```yaml
+- module: sysctl
+  params:
+    attribute: net.core.somaxconn
+    value: 8192
+    permanent: true          # Rendre permanent (/etc/sysctl.conf)
+```
+
+### 6. **command** - Exécuter des commandes shell
+
+Exécuter des commandes shell arbitraires:
+
+```yaml
+- module: command
+  params:
+    command: systemctl status nginx
+```
+
+---
+
+## 📊 Résultats d'exécution
+
+### Exemple de sortie
+
+```
+2026-01-13 17:40:00,123 - mla - INFO - Démarrage de MyLittleAnsible
+2026-01-13 17:40:00,124 - mla - INFO - Inventory chargé avec 2 hôte(s)
+2026-01-13 17:40:00,125 - mla - INFO - Playbook chargé avec 3 tâche(s)
+2026-01-13 17:40:00,126 - mla - INFO - ============================================================
+2026-01-13 17:40:00,127 - mla - INFO - Exécution des tâches sur l'hôte: webserver1
+2026-01-13 17:40:00,128 - mla - INFO - [apt (Tâche 1)] OK [CHANGED]
+2026-01-13 17:40:00,200 - mla - INFO - [copy (Tâche 2)] OK
+2026-01-13 17:40:00,300 - mla - INFO - [service (Tâche 3)] OK [CHANGED]
+2026-01-13 17:40:00,350 - mla - INFO - ============================================================
+2026-01-13 17:40:00,351 - mla - INFO - Résumé du playbook: ok=3 failed=0 changed=2 skipped=0
+```
+
+### Codes de statut
+
+| Statut | Signification |
+|---|---|
+| **OK** | Tâche exécutée avec succès |
+| **OK [CHANGED]** | Tâche a effectué des modifications |
+| **FAILED** | Tâche échouée (arrêt sur cet hôte) |
+| **SKIPPED** | Tâche ignorée |
+
+---
+
+## 🔧 Architecture
+
+```
+┌─────────────────────────────────────────────┐
+│  CLI (Click)                                │
+│  mla -f playbook.yml -i inventory.yml       │
+└────────────────┬────────────────────────────┘
+                 │
+       ┌─────────┴──────────┐
+       ▼                    ▼
+   Inventory          Playbook
+   (Hôtes YAML)       (Tâches YAML)
+       │                    │
+       └────────┬───────────┘
+                ▼
+         Exécuteur de playbook
+                │
+       ┌────────┴────────┐
+       ▼                 ▼
+    SSH Manager     Modules (6 types)
+  (Paramiko)       (Héritage BaseModule)
+```
+
+### Structure du code
+
+```
+mylittleansible/
+├── cli.py              # Point d'entrée (Click)
+├── inventory.py        # Parseur d'inventory
+├── playbook.py         # Exécuteur de playbook
+├── ssh_manager.py      # Gestion des connexions SSH
+├── utils.py            # Structures de données
+└── modules/
+    ├── base.py         # Classe de module de base
+    ├── apt.py          # Module APT
+    ├── copy.py         # Module Copy
+    ├── template.py     # Module Template
+    ├── service.py      # Module Service
+    ├── sysctl.py       # Module Sysctl
+    └── command.py      # Module Command
+```
+
+---
+
+## 💡 Playbooks d'exemple
+
+### Exemple 1: Déployer un serveur web
+
+```yaml
+# deploy_web.yml
 - module: apt
   params:
-    name: nginx
+    name: nginx-common
     state: present
 
 - module: copy
   params:
-    src: "files/nginx.conf"
-    dest: "/etc/nginx/nginx.conf"
+    src: ./nginx.conf
+    dest: /etc/nginx/nginx.conf
 
 - module: service
   params:
     name: nginx
-    state: started
+    state: restarted
+    enabled: true
 
 - module: command
   params:
-    cmd: "systemctl status nginx"
+    command: systemctl status nginx
 ```
 
-### Example 2: System Configuration
+**L'exécuter:**
+
+```bash
+mla -f deploy_web.yml -i inventory.yml --dry-run  # Aperçu d'abord!
+mla -f deploy_web.yml -i inventory.yml             # Exécuter
+```
+
+### Exemple 2: Configuration système
 
 ```yaml
 # sysconfig.yml
 - module: sysctl
   params:
-    name: "net.core.somaxconn"
-    value: "1024"
+    attribute: net.core.somaxconn
+    value: 8192
+    permanent: true
 
 - module: sysctl
   params:
-    name: "net.ipv4.tcp_max_syn_backlog"
-    value: "2048"
+    attribute: net.ipv4.tcp_max_syn_backlog
+    value: 2048
+    permanent: true
 
 - module: command
   params:
-    cmd: "sysctl -p"
+    command: sysctl -p
 ```
 
-### Example 3: Template Deployment
+### Exemple 3: Déploiement de configuration
 
 ```yaml
 # deploy_config.yml
 - module: template
   params:
-    src: "templates/app_config.j2"
-    dest: "/etc/app/config.yml"
-    app_port: "8080"
-    log_level: "DEBUG"
-    database_host: "db.example.com"
+    src: templates/app_config.j2
+    dest: /etc/app/config.yml
+    app_name: MonApp
+    port: 8080
+    environment: production
 ```
 
 ---
 
-## 🔧 Creating Custom Modules
+## 🧪 Tests
 
-Extend `BaseModule` to create custom modules:
+### Tester votre configuration (Dry-Run)
 
-```python
-from mylittleansible.modules.base import BaseModule
-from mylittleansible.utils import CmdResult
-from paramiko import SSHClient
+```bash
+# Aperçu des changements sans les exécuter
+mla -f playbook.yml -i inventory.yml --dry-run
 
-class MyCustomModule(BaseModule):
-    name = "mymodule"
-
-    def process(self, ssh_client: SSHClient) -> CmdResult:
-        self.check_required_params(["param1"])
-        
-        param1 = self.params["param1"]
-        
-        # Execute command via SSH
-        stdin, stdout, stderr = ssh_client.exec_command(f"your_command {param1}")
-        exit_code = stdout.channel.recv_exit_status()
-        
-        return CmdResult(
-            stdout=stdout.read().decode("utf-8"),
-            stderr=stderr.read().decode("utf-8"),
-            exit_code=exit_code,
-            changed=True  # Mark as changed if applicable
-        )
+# Avec sortie verbose
+mla -f playbook.yml -i inventory.yml --dry-run -vvv
 ```
 
-Register in `mylittleansible/modules/__init__.py`:
+### Exécuter les tests unitaires
 
-```python
-from .mymodule import MyCustomModule
+```bash
+# Installer les dépendances de développement
+pip install pytest pytest-cov
 
-__all__ = ["MyCustomModule", ...]
+# Exécuter les tests
+pytest tests/ -v
+
+# Vérifier la couverture
+pytest tests/ --cov=mylittleansible
 ```
 
 ---
 
-## 📁 Project Structure
+## 🔐 Bonnes pratiques de sécurité
 
-```
-ANSIBLE/
-├── mylittleansible/
-│   ├── __init__.py
-│   ├── cli.py                 # Enhanced CLI with dry-run
-│   ├── playbook.py            # Enhanced playbook executor
-│   ├── inventory.py           # Inventory loader
-│   ├── ssh_manager.py         # SSH connection manager
-│   ├── utils.py               # Enhanced utils (CmdResult, TaskResult, PlaybookResult)
-│   └── modules/
-│       ├── __init__.py
-│       ├── base.py            # Enhanced base module
-│       ├── apt.py
-│       ├── command.py
-│       ├── service.py
-│       ├── sysctl.py
-│       ├── copy.py
-│       └── template.py
-├── tests/
-│   ├── __init__.py
-│   ├── test_utils.py          # Unit tests
-│   └── test_modules.py        # Module tests
-├── examples/
-│   ├── playbooks/
-│   ├── inventory/
-│   ├── files/
-│   └── templates/
-├── pyproject.toml             # Project metadata
-├── setup.py                   # Setup configuration
-└── README.md                  # This file
+### ✅ Recommandations pour la production
+
+```yaml
+# ✅ BON: Utiliser les clés SSH en production
+hosts:
+  prod_server:
+    ssh_address: 10.0.0.50
+    ssh_port: 22
+    ssh_user: deploy
+    ssh_key_file: ~/.ssh/id_rsa    # Clé SSH (plus sécurisé)
 ```
 
----
+```yaml
+# ⚠️  À ÉVITER: Authentification par mot de passe en production
+hosts:
+  dev_server:
+    ssh_address: 192.168.1.20
+    ssh_user: ubuntu
+    ssh_password: "secret"          # Seulement pour les tests!
+```
 
-## 🔐 Security Best Practices
+### Bonnes pratiques
 
-- **SSH Keys (Recommended for production)**:
-  ```yaml
-  hosts:
-    prod_server:
-      ssh_address: 10.0.0.50
-      ssh_port: 22
-      ssh_user: deploy
-      ssh_key: "/path/to/id_rsa"
-  ```
-
-- **Credential Management**: Store sensitive data in environment variables or secret management systems
-
-- **Network Security**: Restrict SSH access to authorized IPs only
-
-- **Playbook Review**: Always review playbooks before executing in production
-
-- **Dry-run First**: Use `--dry-run` to preview changes before executing
+- ✅ Utiliser les clés SSH pour les serveurs de production
+- ✅ Toujours utiliser `--dry-run` avant l'exécution réelle
+- ✅ Réviser les playbooks avant de les exécuter en production
+- ✅ Restreindre l'accès SSH aux adresses IP autorisées
+- ✅ Utiliser des passphrases fortes pour les clés SSH
+- ✅ Stocker les identifiants dans des variables d'environnement
 
 ---
 
-## 🐛 Troubleshooting
+## 🆘 Dépannage
 
-### Connection Timeout
-- Verify host is reachable: `ping <host_ip>`
-- Check SSH port: `nc -zv <host_ip> 22`
-- Verify credentials in inventory file
+### Problème: "Timeout de connexion SSH"
 
-### Module Not Found
-- Ensure module file exists in `mylittleansible/modules/`
-- Check module is registered in `__init__.py`
-- Reinstall package: `pip install -e .`
+```bash
+# Vérifier si le serveur est accessible
+ping <host_ip>
 
-### Permission Denied
-- Verify SSH user has required permissions
-- Use `sudo` in command module when needed (requires NOPASSWD sudoers config)
-- Check SSH key permissions: `chmod 600 ~/.ssh/id_rsa`
+# Tester la connexion SSH
+ssh -p 22 <user>@<host_ip>
 
-### Task Failed on Host
-- Check error message in logs
-- Use dry-run to identify issues
-- Verify task parameters are correct
+# Vérifier la configuration de l'inventory
+cat inventory.yml
+```
 
----
+### Problème: "Module apt non trouvé"
 
-## 📚 Dependencies
+```bash
+# Réinstaller le package
+pip install -e .
 
-- **paramiko** (3.4.0+) - SSH protocol implementation
-- **jinja2** (3.1.2+) - Template rendering
-- **click** (8.1.7+) - CLI framework
-- **pyyaml** (6.0.1+) - YAML parsing
-- **pytest** (7.0+) - Testing framework (dev)
+# Vérifier que les modules existent
+ls -la mylittleansible/modules/
+```
 
----
+### Problème: "Permission refusée"
 
-## 📈 Release Notes
+```bash
+# Vérifier les permissions de la clé SSH
+chmod 600 ~/.ssh/id_rsa
 
-### Version 0.2.0 (Current)
-- ✨ Status tracking (OK, FAILED, CHANGED)
-- ✨ Dry-run mode (`--dry-run`)
-- ✨ Verbosity control (`-v`, `-vv`, `-vvv`)
-- ✨ Enhanced error handling
-- ✨ Unit tests with pytest
-- ✨ PlaybookResult aggregation
-- 🔧 Improved logging
-- 📚 Enhanced documentation
+# Vérifier que l'utilisateur a les permissions
+ssh -i ~/.ssh/id_rsa user@host "sudo -l"
+```
 
-### Version 0.1.0
-- Initial release
-- Basic module system
-- SSH-based remote execution
-- Template rendering
+### Problème: "Le dry-run donne une erreur"
+
+Utilisez `--debug` pour voir la stack trace complète:
+
+```bash
+mla -f playbook.yml -i inventory.yml --dry-run --debug
+```
 
 ---
 
-## 🤝 Contributing
+## 📚 Dépendances
 
-Contributions are welcome! To add features or modules:
+| Package | Version | Objectif |
+|---|---|---|
+| **paramiko** | 3.4.0+ | Protocole SSH |
+| **jinja2** | 3.1.2+ | Rendu de templates |
+| **click** | 8.1.7+ | Framework CLI |
+| **pyyaml** | 6.0.1+ | Parsing YAML |
 
-1. Create a new branch
-2. Implement your changes with tests
-3. Run `pytest` to verify
-4. Run `flake8` for code quality
-5. Submit pull request with documentation
+### Installer toutes les dépendances
 
----
-
-## 📄 License
-
-This project is provided as-is for educational and learning purposes.
-
----
-
-## ✨ Future Enhancements
-
-- [ ] Playbook variables and conditions
-- [ ] Error handling and rollback
-- [ ] Parallel execution optimization
-- [ ] Additional modules (user, group, file permissions)
-- [ ] Plugin system
-- [ ] Configuration management
-- [ ] Performance metrics
-- [ ] Result caching
+```bash
+pip install -r requirements.txt
+```
 
 ---
 
-**Last Updated**: December 4, 2025  
-**Version**: 0.2.0 (Enhanced)  
-**Status**: Production Ready ✅
+## 🎓 Parcours d'apprentissage
+
+1. **Comprendre les concepts IaC** - Lire l'aperçu ci-dessus
+2. **Essayer le dry-run** - `mla -f examples/playbooks/test_apt.yml -i examples/inventory/inventory.yml --dry-run`
+3. **Créer un inventory** - Définir vos serveurs cibles
+4. **Écrire un playbook** - Définir vos tâches
+5. **Tester avec dry-run** - Aperçu avant exécution
+6. **Exécuter** - Lancer le playbook
+7. **Surveiller la sortie** - Vérifier les logs pour le statut
+
+---
+
+## 🚀 Checklist de déploiement en production
+
+- [ ] Toutes les tâches testées avec `--dry-run`
+- [ ] Clés SSH configurées pour tous les hôtes
+- [ ] Playbook revu par l'équipe
+- [ ] Sauvegarde des configurations critiques créée
+- [ ] Plan de rollback documenté
+- [ ] Monitoring/logging en place
+- [ ] Exécuter le playbook en heures creuses
+- [ ] Vérifier que toutes les tâches ont réussi
+
+---
+
+## 📈 Historique des versions
+
+**v1.0.0** (Actuel - Jan 13, 2026)
+- ✅ 6 modules entièrement implémentés
+- ✅ Mode dry-run (aperçu des changements)
+- ✅ Mode debug (stack traces)
+- ✅ Niveaux de verbosité (-v, -vv, -vvv)
+- ✅ Authentification par clé SSH
+- ✅ Support des templates Jinja2
+- ✅ Garantie d'idempotence
+- ✅ Logging professionnel
+- ✅ Conforme 100% PEP8
+
+---
+
+## 🤝 Contribution
+
+Les contributions sont bienvenues! Pour ajouter des fonctionnalités:
+
+1. Créer une branche de fonctionnalité
+2. Implémenter avec tests
+3. Exécuter `pytest` pour vérifier
+4. Assurer la conformité PEP8
+5. Soumettre une pull request
+
+---
+
+## 📄 Licence
+
+À des fins éducatives et d'apprentissage.
+
+---
+
+## 🎯 Comparaison avec Ansible
+
+| Aspect | MyLittleAnsible | Ansible |
+|---|---|---|
+| **Modules** | 6 core | 100+ |
+| **Temps d'apprentissage** | 30 minutes | 2+ jours |
+| **Setup** | pip install | Complexe |
+| **Playbooks YAML** | Oui | Oui |
+| **Inventory** | Simple | Complexe |
+| **Communauté** | Éducatif | Enterprise |
+
+**MyLittleAnsible = Les concepts clés d'Ansible, simplifiés!**
+
+---
+
+## 🔥 Fonctionnalités principales
+
+### 🎯 Mode Dry-Run
+
+Aperçu de tous les changements avant exécution:
+
+```bash
+mla -f playbook.yml -i inventory.yml --dry-run
+# Montre exactement ce qui se passera, ne change rien!
+```
+
+### 🐛 Mode Debug
+
+Détails d'erreur complets pour le dépannage:
+
+```bash
+mla -f playbook.yml -i inventory.yml --debug
+# Affiche la stack trace complète en cas d'erreur
+```
+
+### 🔄 Idempotence
+
+Exécuter le même playbook plusieurs fois en toute sécurité. Deuxième exécution = aucun changement:
+
+```bash
+# Première exécution: installe nginx
+mla -f playbook.yml -i inventory.yml
+# [OK] apt [CHANGED]
+
+# Deuxième exécution: nginx existe déjà
+mla -f playbook.yml -i inventory.yml
+# [OK] apt (inchangé)
+```
+
+---
+
+## 📞 Support
+
+Vous avez des problèmes? Vérifiez:
+1. **Sortie du dry-run** - Utilisez `--dry-run` pour tester d'abord
+2. **Logs de debug** - Utilisez `--debug` pour les détails complets
+3. **Configuration de l'inventory** - Vérifiez les identifiants SSH
+4. **Connectivité SSH** - Testez avec `ssh user@host`
+5. **Sortie verbose** - Utilisez `-vvv` pour le maximum de détails
+
+---
+
+## ⭐ Conseils pro
+
+```bash
+# Toujours tester d'abord avec dry-run
+mla -f playbook.yml -i inventory.yml --dry-run
+
+# Utiliser la sortie verbose lors du dépannage
+mla -f playbook.yml -i inventory.yml -vvv
+
+# Combiner dry-run + verbose + debug
+mla -f playbook.yml -i inventory.yml --dry-run -vvv --debug
+
+# Vérifier votre inventory avant d'exécuter
+mla --version  # Vérifier que c'est correctement installé
+```
+
+---
+
+## 🎉 C'est parti!
+
+```bash
+# 1. Installer
+pip install -e .
+
+# 2. Vérifier que ça fonctionne
+mla --help
+
+# 3. Créer inventory.yml
+
+# 4. Créer playbook.yml
+
+# 5. Tester avec dry-run
+mla -f playbook.yml -i inventory.yml --dry-run
+
+# 6. Exécuter
+mla -f playbook.yml -i inventory.yml
+
+# 7. Célébrer! 🎊
+```
+
+---
+
+**Heureux d'automatiser!** 🚀
+
+---
+
+**Dernière mise à jour:** 13 janvier 2026  
+**Version:** 1.0.0  
+**Status:** ✅ Prêt pour la production
